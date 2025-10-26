@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
+</head>
+<body>
+
+    <h1>Testing API calls</h1>
+
+    <div class="container">
+        <h1>Todo Items</h1>
+        <table id="table1" class="table table-dark">
+            <tr><th>ID</th><th>Name</th><th>Is Complete</th></tr>
+        </table>
+    </div>
+    <div class="container">
+        <h1>today's temperature</h1>
+        <span id="weather"></span>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $.ajax({
+                url: "/api/TodoItems",
+                type: "get",
+                contentType: "application/json",
+                success: function (result, status, xhr) {
+                    console.log(result)
+                    var tableString = "";
+                    $.each(result, function (index, value) {
+                        tableString += "<tr><td>" + value.id + "</td><td>" + value.name + "</td><td>" + value.isComplete + "</td></tr>";
+                    });
+                    $("#table1").append(tableString);
+                },
+                error: function (xhr, status, error) {
+                    console.log(xhr)
+                }
+            });
+
+            $.ajax({
+                url: "https://run.mocky.io/v3/424a7e27-dd40-4397-b793-68e3a1e1156b",
+                type: "get",
+                contentType: "application/json",
+                success: function (data, status, xhr) {
+                    console.log(data)
+                    $("#weather").text(data['temperature']);
+
+                },
+                error: function (xhr, status, error) {
+                    console.log(xhr)
+                }
+            });
+
+    });
+    </script>
+</body>
+</html>
