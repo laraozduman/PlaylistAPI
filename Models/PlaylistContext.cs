@@ -9,6 +9,8 @@ public class PlaylistContext : DbContext
     {
     }
 
-    public DbSet<Playlist> Playlists { get; set; } = null!;
-    public DbSet<Song> Songs { get; set; } = null!;
+    public DbSet<PlaylistDto> PlaylistDtos { get; set; } = null!;
+    public DbSet<SongDto> SongDtos { get; set; } = null!;
+    public DbSet<PlaylistModel> Playlists { get; set; } = null!;
+    public DbSet<SongModel> Songs { get; set; } = null!;
 }

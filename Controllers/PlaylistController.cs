@@ -23,6 +23,7 @@ namespace Playlist.Controllers
             _context = context;
         }
 
+        // POST: api/playlist/playlist
         [HttpPost("playlist")]
         public async Task<ActionResult<PlaylistModel>> CreatePlaylist([FromBody] PlaylistModel playlist)
         {
@@ -37,6 +38,7 @@ namespace Playlist.Controllers
             return CreatedAtAction(nameof(GetPlaylists), new { id = playlist.Id }, playlist);
         }
 
+        // GET: api/playlist/playlists
         [HttpGet("playlists")]
         public async Task<ActionResult<IEnumerable<PlaylistModel>>> GetPlaylists()
         {
@@ -44,10 +46,32 @@ namespace Playlist.Controllers
             {
                 return NotFound();
             }
-            var playlists = await _context.Playlists.Include(p => p.Songs).ToListAsync();
-            return Ok(playlists);
+
+            try
+            {
+                var playlists = await _context.Playlists.Include(p => p.Songs).ToListAsync();
+                var playlistDtos = playlists.Select(p => new PlaylistDto
+                {
+                    Id = p.Id,
+                    PlaylistName = p.PlaylistName,
+                    Songs = p.Songs?.Select(s => new SongDto
+                    {
+                        Id = s.Id,
+                        SongName = s.SongName,
+                        Artist = s.Artist,
+                        Duration = s.Duration
+                    }).ToList()
+                }).ToList();
+
+                return Ok(playlistDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
+        // DELETE: api/playlist/playlists/{id}
         [HttpDelete("playlists/{id}")]
         public async Task<IActionResult> DeletePlaylist(long id)
         {
@@ -56,7 +80,7 @@ namespace Playlist.Controllers
             {
                 return NotFound();
             }
-             _context.Songs.RemoveRange(playlist.Songs);
+            _context.Songs.RemoveRange(playlist.Songs);
             _context.Playlists.Remove(playlist);
             await _context.SaveChangesAsync();
 
@@ -64,7 +88,7 @@ namespace Playlist.Controllers
         }
 
         // PUT: api/playlist/{playlistId}
-        [HttpPut("/playlist/{playlistId}")]
+        [HttpPut("{playlistId}")]
         public async Task<IActionResult> UpdatePlaylistName(long playlistId, [FromBody] string newName)
         {
             var playlist = await _context.Playlists.FindAsync(playlistId);
@@ -74,32 +98,32 @@ namespace Playlist.Controllers
             playlist.PlaylistName = newName;
             await _context.SaveChangesAsync();
             return NoContent();
-}
+        }
 
 
-        // GET: api/TodoItems
+        // GET: api/playlist/{playlistId}/songs
         //retrieve all songs in a playlist
         [HttpGet("playlist/{playlistId}/songs")]
         public async Task<ActionResult<IEnumerable<SongModel>>> GetAllSongs(long playlistId)
         {
-          if (_context.Songs == null)
-          {
-              return NotFound();
-          }
+            if (_context.Songs == null)
+            {
+                return NotFound();
+            }
 
-          var songs = await _context.Songs.Include(s => s.Playlist)
-              .Where(s => s.PlaylistId == playlistId)
-              .ToListAsync();
+            var songs = await _context.Songs.Include(s => s.Playlist)
+                .Where(s => s.PlaylistId == playlistId)
+                .ToListAsync();
 
-          if (songs == null || songs.Count == 0)
-          {
-              return NotFound();
-          }
+            if (songs == null || songs.Count == 0)
+            {
+                return NotFound();
+            }
 
-          return songs;
+            return songs;
         }
 
-        // GET: api/TodoItems/5
+        // GET: api/playlist/5
         // retrieve a specific song by id
         [HttpGet("{id}")]
         public async Task<ActionResult<SongModel>> GetSong(long id)
@@ -114,28 +138,33 @@ namespace Playlist.Controllers
             return Ok(song);
         }
 
-        // POST: api/TodoItems
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        // POST: api/playlist
         [HttpPost]
-        public async Task<ActionResult<SongModel>> PostSong(SongModel song)
+        public async Task<ActionResult<SongModel>> PostSong([FromBody] SongDto songDto)
         {
-            if (!_context.Playlists.Any(p => p.Id == song.PlaylistId))
+            if (!_context.Playlists.Any(p => p.Id == songDto.PlaylistId))
             {
                 return BadRequest("Invalid Playlist, please enter a valid playlist.");
             }
 
-            if (song.SongName == null || song.SongName.Length == 0)
+            if (songDto.SongName == null || songDto.SongName.Length == 0)
             {
                 return Problem("Need name for song");
             }
-
+            var song = new SongModel
+            {
+                SongName = songDto.SongName,
+                Artist = songDto.Artist,
+                Duration = songDto.Duration,
+                PlaylistId = songDto.PlaylistId
+            };
             _context.Songs.Add(song);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetSong), new { id = song.Id }, song);
         }
 
-        // DELETE: api/TodoItems/5
+        // DELETE: api/playlist/5
         [HttpDelete("{id}")]
         // [Authorize]
         public async Task<IActionResult> DeleteSong(long id)
@@ -152,6 +181,7 @@ namespace Playlist.Controllers
             return NoContent();
         }
 
+        // DELETE: api/playlist/playlist/{playlistId}/songs
         [HttpDelete("playlist/{playlistId}/songs")]
         public async Task<IActionResult> DeleteAllSongsInPlaylist(long playlistId)
         {
@@ -192,10 +222,6 @@ namespace Playlist.Controllers
         }
 
 
-        private bool SongExists(long id)
-        {
-            return (_context.Songs?.Any(e => e.Id == id)).GetValueOrDefault();
-        }
     }
 }
 

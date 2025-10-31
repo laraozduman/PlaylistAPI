@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 public class SongModel
 {
     public long Id { get; set; }
@@ -6,5 +8,5 @@ public class SongModel
     public string? Artist { get; set; }
     [ForeignKey("Playlist")]
     public long PlaylistId { get; set; }
-    public PlaylistModel Playlist { get; set; }
+    public PlaylistModel? Playlist { get; set; }
 }
