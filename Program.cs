@@ -56,13 +56,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("corsapp");
 
-app.UseFileServer(new FileServerOptions
-{
-    FileProvider = new PhysicalFileProvider(
-Path.Combine(Directory.GetCurrentDirectory(), "Static")),
-    RequestPath = "/Static",
-    EnableDefaultFiles = true
-});
 
 app.MapControllers();
 
